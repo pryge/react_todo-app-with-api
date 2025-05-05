@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 import { Todo } from '../types/Todo';
 import { updateTodo } from '../api/todos';
@@ -29,7 +29,6 @@ export const TodoItem: React.FC<Props> = ({
   handleTodoDelete,
   isLoading,
   setIsLoading,
-  isDeleteAllPressed,
   isUpdating,
   setIsUpdating,
   onTodoUpdate,
@@ -39,6 +38,13 @@ export const TodoItem: React.FC<Props> = ({
   const [targetTodoId, setTargetTodoId] = useState(0);
   const [editedTitle, setEditedTitle] = useState(title);
   const [isEditing, setIsEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isEditing]);
 
   const handleSave = async () => {
     const trimmedTitle = editedTitle.trim();
@@ -50,12 +56,12 @@ export const TodoItem: React.FC<Props> = ({
 
       try {
         handleTodoDelete(id);
+        setIsEditing(false);
+        setSelectedPostId(0);
       } catch {
         setCurrentError?.(ErrorType.UnableToDeleteTodo);
       } finally {
         setIsLoading(false);
-        setIsEditing(false);
-        setSelectedPostId(0);
       }
 
       return;
@@ -78,11 +84,12 @@ export const TodoItem: React.FC<Props> = ({
       const updated = await updateTodo(id, { title: trimmedTitle });
 
       onTodoUpdate?.(updated);
+      setIsEditing(false);
+      setSelectedPostId(0);
     } catch {
       setCurrentError?.(ErrorType.UnableToUpdateTodo);
     } finally {
       setIsLoading(false);
-      setIsEditing(false);
     }
   };
 
@@ -154,6 +161,7 @@ export const TodoItem: React.FC<Props> = ({
           }}
         >
           <input
+            ref={inputRef}
             data-cy="TodoTitleField"
             type="text"
             className="todo__title-field"
@@ -162,7 +170,6 @@ export const TodoItem: React.FC<Props> = ({
             onKeyUp={handleKeyUp}
             onBlur={handleBlur}
             value={editedTitle}
-            autoFocus
           />
         </form>
       ) : (
@@ -194,9 +201,7 @@ export const TodoItem: React.FC<Props> = ({
       <div
         data-cy="TodoLoader"
         className={classNames('modal overlay', {
-          'is-active':
-            (isLoading && todo.id === targetTodoId) ||
-            (isDeleteAllPressed && todo.completed),
+          'is-active': isLoading && todo.id === targetTodoId,
         })}
       >
         <div className="modal-background has-background-white-ter" />
