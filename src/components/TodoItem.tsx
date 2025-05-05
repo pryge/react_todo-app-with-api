@@ -49,17 +49,17 @@ export const TodoItem: React.FC<Props> = ({
   const handleSave = async () => {
     const trimmedTitle = editedTitle.trim();
 
-    // Якщо новий заголовок порожній, видаляємо todo
-    if (!trimmedTitle) {
-      setIsLoading(true);
-      setTargetTodoId(id);
+    setIsLoading(true);
+    setTargetTodoId(id);
 
+    if (!trimmedTitle) {
       try {
         handleTodoDelete(id);
         setIsEditing(false);
         setSelectedPostId(0);
       } catch {
         setCurrentError?.(ErrorType.UnableToDeleteTodo);
+        // НЕ закриваємо інпут
       } finally {
         setIsLoading(false);
       }
@@ -67,18 +67,14 @@ export const TodoItem: React.FC<Props> = ({
       return;
     }
 
-    // Якщо заголовок не змінився, скасовуємо редагування
     if (trimmedTitle === title) {
       setIsEditing(false);
       setSelectedPostId(0);
       setEditedTitle(title);
+      setIsLoading(false);
 
       return;
     }
-
-    // Якщо заголовок змінився, оновлюємо
-    setIsLoading(true);
-    setTargetTodoId(id);
 
     try {
       const updated = await updateTodo(id, { title: trimmedTitle });
@@ -88,6 +84,7 @@ export const TodoItem: React.FC<Props> = ({
       setSelectedPostId(0);
     } catch {
       setCurrentError?.(ErrorType.UnableToUpdateTodo);
+      // НЕ закриваємо інпут
     } finally {
       setIsLoading(false);
     }
@@ -115,11 +112,14 @@ export const TodoItem: React.FC<Props> = ({
       });
   };
 
-  const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyUp = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       if (editedTitle.trim() === '') {
         setIsLoading(true);
         setTargetTodoId(id);
+
+        // Зачекай на рендер (дати React час показати loader)
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
 
       handleSave();
