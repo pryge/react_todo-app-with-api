@@ -54,12 +54,15 @@ export const TodoItem: React.FC<Props> = ({
 
     if (!trimmedTitle) {
       try {
-        handleTodoDelete(id);
+        await handleTodoDelete(id);
         setIsEditing(false);
         setSelectedPostId(0);
       } catch {
         setCurrentError?.(ErrorType.UnableToDeleteTodo);
-        // НЕ закриваємо інпут
+        setIsEditing(true);
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 0);
       } finally {
         setIsLoading(false);
       }
@@ -84,7 +87,6 @@ export const TodoItem: React.FC<Props> = ({
       setSelectedPostId(0);
     } catch {
       setCurrentError?.(ErrorType.UnableToUpdateTodo);
-      // НЕ закриваємо інпут
     } finally {
       setIsLoading(false);
     }

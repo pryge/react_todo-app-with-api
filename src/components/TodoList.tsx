@@ -61,19 +61,18 @@ export const TodoList: React.FC<Props> = ({
       todosCopy = [...visibleTodos];
   }
 
-  const handleTodoDelete = (todoId: number) => {
+  const handleTodoDelete = async (todoId: number) => {
     setIsLoading(true);
 
-    deleteTodo(todoId.toString())
-      .then(() => {
-        setTodos(visibleTodos.filter(todo => todo.id !== todoId));
-      })
-      .catch(() => {
-        setCurrentError(ErrorType.UnableToDeleteTodo);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+    try {
+      await deleteTodo(todoId.toString());
+      setTodos(visibleTodos.filter(todo => todo.id !== todoId));
+    } catch (error) {
+      setCurrentError(ErrorType.UnableToDeleteTodo);
+      throw error; // 👈 Кидаємо далі, щоб TodoItem міг це обробити
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
